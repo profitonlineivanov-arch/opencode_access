@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background -->
+    <path
+        android:fillColor="#1E1E1E"
+        android:pathData="M0,0h108v108H0z" />
+    
+    <!-- Terminal window -->
+    <path
+        android:fillColor="#2D2D2D"
+        android:pathData="M20,25 L88,25 L88,75 L20,75 Z" />
+    
+    <!-- Terminal title bar -->
+    <path
+        android:fillColor="#3C3C3C"
+        android:pathData="M20,25 L88,25 L88,35 L20,35 Z" />
+    
+    <!-- Window buttons -->
+    <path
+        android:fillColor="#FF5F56"
+        android:pathData="M28,30 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#FFBD2E"
+        android:pathData="M38,30 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#27C93F"
+        android:pathData="M48,30 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    
+    <!-- Terminal prompt -->
+    <path
+        android:fillColor="#6750A4"
+        android:pathData="M26,45 L32,50 L26,55"
+        android:strokeWidth="2"
+        android:strokeColor="#6750A4" />
+    
+    <!-- Cursor -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,45 L36,55"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFFFF" />
+    
+    <!-- Text lines -->
+    <path
+        android:fillColor="#888888"
+        android:pathData="M45,47 L70,47"
+        android:strokeWidth="1.5"
+        android:strokeColor="#888888" />
+    <path
+        android:fillColor="#888888"
+        android:pathData="M45,52 L65,52"
+        android:strokeWidth="1.5"
+        android:strokeColor="#888888" />
+    
+    <!-- Cloud / Remote symbol -->
+    <path
+        android:fillColor="#6750A4"
+        android:pathData="M70,60 Q70,55 75,55 Q75,50 82,52 Q88,48 92,53 Q96,55 96,60 Q96,65 90,67 L78,67 Q70,67 70,60 Z" />
+    
+    <!-- Connection lines -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M60,55 L70,60"
+        android:strokeWidth="1.5"
+        android:strokeColor="#6750A4" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M60,60 L70,60"
+        android:strokeWidth="1.5"
+        android:strokeColor="#6750A4" />
+</vector>
