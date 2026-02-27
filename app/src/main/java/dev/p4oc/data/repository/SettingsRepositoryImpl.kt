@@ -93,4 +93,11 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs.remove(Keys.SERVER_USE_URL)
         }
     }
+
+    override suspend fun saveUrlOnly(url: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.SERVER_FULL_URL] = url
+            prefs[Keys.SERVER_USE_URL] = true
+        }
+    }
 }

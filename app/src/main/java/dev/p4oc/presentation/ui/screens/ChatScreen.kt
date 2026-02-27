@@ -26,7 +26,8 @@ import dev.p4oc.presentation.viewmodel.ChatViewModel
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToQrScanner: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState(ChatUiState())
     val connectionState by viewModel.connectionState.collectAsState(ConnectionState(false, false))
@@ -40,6 +41,24 @@ fun ChatScreen(
     LaunchedEffect(serverConfig) {
         if (serverConfig != null && serverConfig!!.isConfigured && !connectionState.isConnected && !connectionState.isConnecting) {
             viewModel.connect(serverConfig!!)
+        }
+    }
+
+    // Handle scanned QR code URL
+    val scannedUrl = remember { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(scannedUrl.value) {
+        scannedUrl.value?.let { url ->
+            val config = ServerConfig(
+                host = "",
+                port = 4096,
+                username = "",
+                password = "",
+                useUrl = true,
+                fullUrl = url
+            )
+            viewModel.connect(config)
+            scannedUrl.value = null
         }
     }
 
@@ -79,6 +98,9 @@ fun ChatScreen(
                                 Icon(Icons.Default.Stop, contentDescription = "Stop")
                             }
                         }
+                        IconButton(onClick = onNavigateToQrScanner) {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR")
+                        }
                         IconButton(onClick = onNavigateToSettings) {
                             Icon(Icons.Default.Settings, contentDescription = "Settings")
                         }
@@ -104,7 +126,8 @@ fun ChatScreen(
         ) {
             if (!connectionState.isConnected && !connectionState.isConnecting) {
                 NotConnectedView(
-                    onConnect = { showConnectDialog = true }
+                    onConnect = { showConnectDialog = true },
+                    onScanQr = onNavigateToQrScanner
                 )
             } else if (uiState.messages.isEmpty()) {
                 EmptyChatView()
@@ -293,7 +316,10 @@ private fun ChatInput(
 }
 
 @Composable
-private fun NotConnectedView(onConnect: () -> Unit) {
+private fun NotConnectedView(
+    onConnect: () -> Unit,
+    onScanQr: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -320,15 +346,24 @@ private fun NotConnectedView(onConnect: () -> Unit) {
         Text(
             "Connect to your OpenCode server to start chatting",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        Button(onClick = onConnect) {
+        Button(onClick = onScanQr) {
+            Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Scan QR Code")
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        OutlinedButton(onClick = onConnect) {
             Icon(Icons.Default.Link, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Connect")
+            Text("Manual Connect")
         }
     }
 }

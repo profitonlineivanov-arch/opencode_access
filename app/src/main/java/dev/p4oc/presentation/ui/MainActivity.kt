@@ -20,8 +20,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import dev.p4oc.domain.model.ServerConfig
 import dev.p4oc.presentation.ui.screens.ChatScreen
 import dev.p4oc.presentation.ui.screens.FilesScreen
+import dev.p4oc.presentation.ui.screens.QrScannerScreen
 import dev.p4oc.presentation.ui.screens.SettingsScreen
 import dev.p4oc.presentation.ui.theme.P4OCTheme
 import dev.p4oc.presentation.viewmodel.SettingsViewModel
@@ -59,6 +61,7 @@ sealed class Screen(
     data object Chat : Screen("chat", "Chat", Icons.Default.Chat)
     data object Files : Screen("files", "Files", Icons.Default.Folder)
     data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    data object QrScanner : Screen("qr_scanner", "QR Scanner", Icons.Default.QrCodeScanner)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,29 +69,34 @@ sealed class Screen(
 fun MainScreen() {
     val navController = rememberNavController()
     val screens = listOf(Screen.Chat, Screen.Files, Screen.Settings)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val showBottomBar = currentRoute in screens.map { it.route }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+            if (showBottomBar) {
+                NavigationBar {
+                    val currentDestination = navBackStackEntry?.destination
 
-                screens.forEach { screen ->
-                    NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.title) },
-                        label = { Text(screen.title) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                    screens.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            label = { Text(screen.title) },
+                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -102,6 +110,9 @@ fun MainScreen() {
                 ChatScreen(
                     onNavigateToSettings = {
                         navController.navigate(Screen.Settings.route)
+                    },
+                    onNavigateToQrScanner = {
+                        navController.navigate(Screen.QrScanner.route)
                     }
                 )
             }
@@ -112,6 +123,18 @@ fun MainScreen() {
 
             composable(Screen.Settings.route) {
                 SettingsScreen()
+            }
+
+            composable(Screen.QrScanner.route) {
+                QrScannerScreen(
+                    onQrCodeScanned = { url ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set("scanned_url", url)
+                        navController.popBackStack()
+                    },
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }

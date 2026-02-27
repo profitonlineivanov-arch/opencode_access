@@ -12,6 +12,7 @@ interface SettingsRepository {
     suspend fun saveTheme(theme: ThemeMode)
     suspend fun saveConnectionTimeout(timeout: Int)
     suspend fun clearServerConfig()
+    suspend fun saveUrlOnly(url: String)
 }
 
 enum class ThemeMode {
