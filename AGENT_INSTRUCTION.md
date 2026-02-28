@@ -2,28 +2,70 @@
 
 ## Задача
 
-Пользователю нужно подключить Android-приложение "Opencode Access" к твоему серверу через интернет.
+Пользователю нужно подключить Android-приложение к твоему серверу. Нужно создать QR-код с URL туннеля.
 
-## Что нужно сделать
+## Выполни эти шаги:
 
-1. **Запусти туннель** - выполни команду в терминале:
-   ```
-   cloudflared tunnel --protocol http2 --url http://localhost:4096
-   ```
+### Шаг 1: Запусти туннель
 
-2. **Дождись URL** - после запуска появится адрес вида `https://xxx.trycloudflare.com`
+Выполни в терминале:
+```
+cloudflared tunnel --protocol http2 --url http://localhost:4096
+```
 
-3. **Создай QR-код** - сгенерируй QR-код с этим URL. Можно использовать:
-   - Python: `python -c "import qrcode; qrcode.make('https://URL').save('qr.png')"`
-   - Node.js: `npx qrcode https://URL`
-   - Или любой другой способ
+**Важно:** Дождись пока появится URL (например `https://xxx.trycloudflare.com`)
 
-4. **Покажи QR-код** - выведи его на экран так, чтобы можно было сфотографировать телефоном
+### Шаг 2: Создай QR-код
 
-5. **Подтверди** - скажи пользователю что всё готово и он может сканировать
+После получения URL выполни:
+```
+python -c "import qrcode; qrcode.make('ТВОЙ_URL').save('qr.png')"
+```
 
-## Важно
+### Шаг 3: Покажи QR-код
 
-- Используй флаг `--protocol http2` для облачного туннеля (QUIC может быть заблокирован)
-- Туннель должен оставаться запущенным пока пользователь использует приложение
-- URL туннеля динамический - при перезапуске нужно создавать новый QR-код
+Открой файл qr.png командой:
+```
+# Windows
+start qr.png
+
+# macOS
+open qr.png
+
+# Linux
+xdg-open qr.png
+```
+
+### Шаг 4: Подтверди
+
+Скажи пользователю: "Готово! Отсканируй QR-код приложением"
+
+---
+
+## Если cloudflared не установлен
+
+**Windows (PowerShell):**
+```
+Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile 'cloudflared.exe'
+```
+
+**macOS:**
+```
+brew install cloudflared
+```
+
+**Linux:**
+```
+curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+chmod +x cloudflared
+```
+
+---
+
+## Важные правила:
+
+1. ✅ Всегда используй флаг `--protocol http2`
+2. ✅ Не завершай туннель пока пользователь не отключится
+3. ✅ При перезапуске туннеля нужно создать новый QR-код
+4. ❌ Не говори "я не могу" - просто сделай это
+5. ❌ Не проси пользователя сделать что-то самому - сделай сам

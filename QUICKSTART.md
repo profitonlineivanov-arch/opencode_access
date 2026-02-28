@@ -1,33 +1,35 @@
-# Как подключить телефон к OpenCode (2 минуты)
+# Подключение телефона к OpenCode (1 минута)
 
-## Шаг 1: Скажите агенту это:
+## Копируй и отправь это агенту:
 
 ```
-Пожалуйста, сделай следующее:
-1. Запусти в терминале: cloudflared tunnel --protocol http2 --url http://localhost:4096
-2. Когда получишь URL туннеля - создай QR-код с этим URL и покажи его мне
+Пожалуйста, выполни следующее:
+1. Скачай файл start_tunnel.bat (или start_tunnel.sh для macOS/Linux) из репозитория https://github.com/profitonlineivanov-arch/opencode_access/tree/main/scripts
+2. Запусти этот файл
+3. Покажи мне QR-код который появится на экране
 ```
-
-## Шаг 2: Отсканируйте QR-код
-
-1. Установите APK: https://github.com/profitonlineivanov-arch/opencode_access/releases/download/v1.1.0/app-debug.apk
-2. Откройте приложение
-3. Нажмите "Scan QR Code"
-4. Наведите камеру на QR-код
 
 ## Готово!
 
-Приложение автоматически подключится к OpenCode.
+Отсканируй QR-код приложением и ты подключён к OpenCode.
 
 ---
 
-## Если что-то не работает
+## Альтернатива - просто скажи:
 
-### "cloudflared не найден"
-Скажите агенту: "Установи cloudflared: https://github.com/cloudflare/cloudflared/releases"
+```
+Запусти туннель для подключения телефона к OpenCode. 
+Скачай скрипт из https://github.com/profitonlineivanov-arch/opencode_access/tree/main/scripts 
+Запусти start_tunnel.bat и покажи QR-код.
+```
 
-### "QR-кода нет на экране"
-Скажите агенту: "Создай QR-код с URL туннеля командой: python -c \"import qrcode; qrcode.make('URL').save('qr.png')\" и покажи картинку"
+---
 
-### Туннель закрылся
-Просто попросите перезапустить туннель и создать новый QR-код
+## Проблемы?
+
+Если агент не может скачать файл, скажи:
+
+```
+Создай файл start_tunnel.bat с содержимым из: https://raw.githubusercontent.com/profitonlineivanov-arch/opencode_access/main/scripts/start_tunnel.bat
+Запусти его и покажи QR-код
+```
