@@ -1,35 +1,31 @@
-# Подключение телефона к OpenCode (1 минута)
+# Подключение телефона к OpenCode (30 секунд)
 
-## Копируй и отправь это агенту:
+## Скажи это агенту (скопируй и отправь):
 
 ```
-Пожалуйста, выполни следующее:
-1. Скачай файл start_tunnel.bat (или start_tunnel.sh для macOS/Linux) из репозитория https://github.com/profitonlineivanov-arch/opencode_access/tree/main/scripts
-2. Запусти этот файл
-3. Покажи мне QR-код который появится на экране
+Пожалуйста, сделай следующее:
+1. Открой терминал
+2. Вставь и выполни эту команду:
+cloudflared tunnel --protocol http2 --url http://localhost:4096
+3. Дождись когда появится ссылка (например https://xxx.trycloudflare.com)
+4. Создай QR-код с этой ссылкой и покажи мне
+
+Если cloudflared не установлен - установи его: https://github.com/cloudflare/cloudflared/releases
 ```
 
-## Готово!
+## Всё!
 
-Отсканируй QR-код приложением и ты подключён к OpenCode.
+Агент сам сделает туннель и покажет QR-код.
+Тебе нужно только отсканировать его приложением.
 
 ---
 
-## Альтернатива - просто скажи:
+## Если нужно ещё проще
 
-```
-Запусти туннель для подключения телефона к OpenCode. 
-Скачай скрипт из https://github.com/profitonlineivanov-arch/opencode_access/tree/main/scripts 
-Запусти start_tunnel.bat и покажи QR-код.
-```
+Просто дай агенту эту ссылку:
+**https://github.com/cloudflare/cloudflared/releases**
 
----
+И скажи: "Скачай, установи и запусти туннель командой:
+cloudflared tunnel --protocol http2 --url http://localhost:4096
 
-## Проблемы?
-
-Если агент не может скачать файл, скажи:
-
-```
-Создай файл start_tunnel.bat с содержимым из: https://raw.githubusercontent.com/profitonlineivanov-arch/opencode_access/main/scripts/start_tunnel.bat
-Запусти его и покажи QR-код
-```
+Потом покажи QR-код"

@@ -1,71 +1,32 @@
 # Инструкция для агента OpenCode
 
 ## Задача
+Пользователю нужен QR-код для подключения телефона к твоему серверу.
 
-Пользователю нужно подключить Android-приложение к твоему серверу. Нужно создать QR-код с URL туннеля.
+## Что делать
 
-## Выполни эти шаги:
+### Шаг 1: Проверь есть ли cloudflared
+В терминале введи: `cloudflared --version`
 
-### Шаг 1: Запусти туннель
+Если нет - скачай: https://github.com/cloudflare/cloudflared/releases
 
-Выполни в терминале:
+### Шаг 2: Запусти туннель
+Введи и выполни:
 ```
 cloudflared tunnel --protocol http2 --url http://localhost:4096
 ```
 
-**Важно:** Дождись пока появится URL (например `https://xxx.trycloudflare.com`)
+### Шаг 3: Дождись URL
+Терминал покажет ссылку вида: `https://xxx.trycloudflare.com`
 
-### Шаг 2: Создай QR-код
-
-После получения URL выполни:
+### Шаг 4: Создай QR-код
+Введи (подставив свою ссылку):
 ```
-python -c "import qrcode; qrcode.make('ТВОЙ_URL').save('qr.png')"
-```
-
-### Шаг 3: Покажи QR-код
-
-Открой файл qr.png командой:
-```
-# Windows
-start qr.png
-
-# macOS
-open qr.png
-
-# Linux
-xdg-open qr.png
+python -c "import qrcode; qrcode.make('https://твоя_ссылка.trycloudflare.com').save('qr.png')"
 ```
 
-### Шаг 4: Подтверди
+### Шаг 5: Покажи QR-код
+Введи `start qr.png` (Windows) или `open qr.png` (Mac)
 
-Скажи пользователю: "Готово! Отсканируй QR-код приложением"
-
----
-
-## Если cloudflared не установлен
-
-**Windows (PowerShell):**
-```
-Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile 'cloudflared.exe'
-```
-
-**macOS:**
-```
-brew install cloudflared
-```
-
-**Linux:**
-```
-curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
-chmod +x cloudflared
-```
-
----
-
-## Важные правила:
-
-1. ✅ Всегда используй флаг `--protocol http2`
-2. ✅ Не завершай туннель пока пользователь не отключится
-3. ✅ При перезапуске туннеля нужно создать новый QR-код
-4. ❌ Не говори "я не могу" - просто сделай это
-5. ❌ Не проси пользователя сделать что-то самому - сделай сам
+## Готово!
+Скажи пользователю: "Отсканируй QR-код приложением"
