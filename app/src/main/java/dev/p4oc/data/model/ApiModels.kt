@@ -78,16 +78,6 @@ data class PermissionRequest(
 )
 
 @Serializable
-data class FilesResponse(
-    val info: List<FileEntryDto>
-)
-
-@Serializable
-data class FileContentResponse(
-    val info: FileContentDto
-)
-
-@Serializable
 data class ToolCallRequest(
     val toolCallId: String,
     val approved: Boolean
@@ -103,20 +93,26 @@ data class ConfirmationRequest(
 data class FileEntryDto(
     val name: String,
     val path: String,
-    @SerialName("is_directory")
-    val isDirectory: Boolean,
+    val absolute: String = "",
+    val type: String = "file",
     val size: Long = 0,
     val extension: String = ""
-)
+) {
+    val isDirectory: Boolean
+        get() = type == "directory"
+}
 
 @Serializable
 data class FileContentDto(
-    val path: String,
-    val content: String,
-    @SerialName("line_count")
-    val lineCount: Int,
+    val path: String = "",
+    val content: String = "",
+    val type: String = "text",
+    val lines: Int = 0,
     val language: String = ""
-)
+) {
+    val lineCount: Int
+        get() = lines
+}
 
 @Serializable
 data class SessionDto(

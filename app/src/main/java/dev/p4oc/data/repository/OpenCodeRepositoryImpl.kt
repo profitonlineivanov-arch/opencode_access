@@ -228,7 +228,7 @@ class OpenCodeRepositoryImpl @Inject constructor(
     override suspend fun listFiles(path: String): List<FileItem> {
         return try {
             val response = currentApi?.listFiles(path)
-            response?.info?.map { dto ->
+            response?.map { dto ->
                 FileItem(
                     name = dto.name,
                     path = dto.path,
@@ -244,7 +244,7 @@ class OpenCodeRepositoryImpl @Inject constructor(
 
     override suspend fun readFile(path: String): FileContent {
         val response = currentApi?.getFileContent(path)
-        return response?.info?.let { dto ->
+        return response?.let { dto ->
             FileContent(
                 path = dto.path,
                 content = dto.content,

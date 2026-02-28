@@ -40,8 +40,8 @@ interface OpenCodeApi {
     )
 
     @GET("file")
-    suspend fun listFiles(@Query("path") path: String): FilesResponse
+    suspend fun listFiles(@Query("path") path: String): List<FileEntryDto>
 
     @GET("file/content")
-    suspend fun getFileContent(@Query("path") path: String): FileContentResponse
+    suspend fun getFileContent(@Query("path") path: String): FileContentDto
 }
