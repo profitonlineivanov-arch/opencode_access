@@ -4,16 +4,87 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ApiResponse<T>(
-    val success: Boolean = true,
-    val data: T? = null,
-    val error: String? = null
+data class HealthResponse(
+    val healthy: Boolean,
+    val version: String
+)
+
+@Serializable
+data class CreateSessionRequest(
+    val title: String? = null
+)
+
+@Serializable
+data class SessionResponse(
+    val id: String,
+    @SerialName("project_path")
+    val projectPath: String,
+    @SerialName("created_at")
+    val createdAt: Long,
+    @SerialName("is_active")
+    val isActive: Boolean = true,
+    val title: String = ""
+)
+
+@Serializable
+data class SessionsListResponse(
+    val info: List<SessionDto>
 )
 
 @Serializable
 data class ChatRequest(
     val message: String,
-    val continueSession: Boolean = false
+    val parts: List<Part>? = null,
+    val agent: String? = null,
+    val model: String? = null
+)
+
+@Serializable
+data class Part(
+    val type: String,
+    val text: String? = null
+)
+
+@Serializable
+data class MessageResponse(
+    val info: MessageDto,
+    val parts: List<MessagePart>
+)
+
+@Serializable
+data class MessageDto(
+    val id: String,
+    val role: String,
+    val content: String,
+    @SerialName("created_at")
+    val createdAt: Long
+)
+
+@Serializable
+data class MessagePart(
+    val type: String,
+    val text: String? = null,
+    @SerialName("tool_name")
+    val toolName: String? = null,
+    val args: Map<String, String>? = null,
+    @SerialName("tool_call_id")
+    val toolCallId: String? = null
+)
+
+@Serializable
+data class PermissionRequest(
+    val response: String,
+    val remember: Boolean = false
+)
+
+@Serializable
+data class FilesResponse(
+    val info: List<FileEntryDto>
+)
+
+@Serializable
+data class FileContentResponse(
+    val info: FileContentDto
 )
 
 @Serializable
@@ -55,7 +126,8 @@ data class SessionDto(
     @SerialName("created_at")
     val createdAt: Long,
     @SerialName("is_active")
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val title: String = ""
 )
 
 @Serializable

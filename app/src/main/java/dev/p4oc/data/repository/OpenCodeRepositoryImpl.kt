@@ -35,6 +35,7 @@ class OpenCodeRepositoryImpl @Inject constructor(
     private var currentConfig: ServerConfig? = null
     private var currentApi: OpenCodeApi? = null
     private var streamingJob: Job? = null
+    private var currentSessionId: String? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private fun createApi(baseUrl: String): OpenCodeApi {
@@ -52,8 +53,27 @@ class OpenCodeRepositoryImpl @Inject constructor(
         try {
             _connectionState.value = ConnectionState(false, true)
 
-            // Create API with the correct base URL
             currentApi = createApi(config.baseUrl)
+
+            // Check health first
+            try {
+                val health = currentApi?.healthCheck()
+                if (health?.healthy != true) {
+                    throw Exception("Server not healthy")
+                }
+            } catch (e: Exception) {
+                _connectionState.value = ConnectionState(false, false, "Cannot connect to server: ${e.message}")
+                return
+            }
+
+            // Get or create session
+            try {
+                val sessions = currentApi?.listSessions()
+                val activeSession = sessions?.info?.firstOrNull { it.isActive }
+                currentSessionId = activeSession?.id ?: createNewSession()
+            } catch (e: Exception) {
+                currentSessionId = createNewSession()
+            }
 
             // Start SSE stream
             streamingJob?.cancel()
@@ -96,14 +116,18 @@ class OpenCodeRepositoryImpl @Inject constructor(
         }
     }
 
+    private suspend fun createNewSession(): String {
+        val response = currentApi?.createSession(CreateSessionRequest())
+        return response?.id ?: throw Exception("Failed to create session")
+    }
+
     private suspend fun parseAndEmitConfirmations(data: String) {
         try {
-            val event = parseSseEvent(data)
-            if (event?.type == "confirmation") {
+            if (data.contains("permission")) {
                 val confirmation = UserConfirmation(
-                    id = event.data,
-                    message = event.data,
-                    toolCallId = event.data
+                    id = "pending",
+                    message = "Permission request",
+                    toolCallId = "pending"
                 )
                 _confirmations.emit(confirmation)
             }
@@ -126,17 +150,19 @@ class OpenCodeRepositoryImpl @Inject constructor(
         sseClient.disconnect()
         currentConfig = null
         currentApi = null
+        currentSessionId = null
         _connectionState.value = ConnectionState(false, false)
     }
 
     override suspend fun sendMessage(content: String) {
         currentConfig?.let { config ->
+            val sessionId = currentSessionId ?: return
             try {
                 val request = ChatRequest(
                     message = content,
-                    continueSession = true
+                    parts = listOf(Part(type = "text", text = content))
                 )
-                currentApi?.sendChat(request)
+                currentApi?.sendMessage(sessionId, request)
             } catch (e: Exception) {
                 _connectionState.value = _connectionState.value.copy(
                     error = e.message
@@ -146,57 +172,63 @@ class OpenCodeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun approveToolCall(toolCallId: String) {
-        try {
-            currentApi?.respondToToolCall(ToolCallRequest(toolCallId, true))
-        } catch (e: Exception) {
-            _connectionState.value = _connectionState.value.copy(error = e.message)
+        currentSessionId?.let { sessionId ->
+            try {
+                currentApi?.respondToPermission(sessionId, toolCallId, PermissionRequest("allow"))
+            } catch (e: Exception) {
+                _connectionState.value = _connectionState.value.copy(error = e.message)
+            }
         }
     }
 
     override suspend fun denyToolCall(toolCallId: String) {
-        try {
-            currentApi?.respondToToolCall(ToolCallRequest(toolCallId, false))
-        } catch (e: Exception) {
-            _connectionState.value = _connectionState.value.copy(error = e.message)
+        currentSessionId?.let { sessionId ->
+            try {
+                currentApi?.respondToPermission(sessionId, toolCallId, PermissionRequest("deny"))
+            } catch (e: Exception) {
+                _connectionState.value = _connectionState.value.copy(error = e.message)
+            }
         }
     }
 
     override suspend fun approveConfirmation(confirmationId: String) {
-        try {
-            currentApi?.respondToConfirmation(ConfirmationRequest(confirmationId, true))
-        } catch (e: Exception) {
-            _connectionState.value = _connectionState.value.copy(error = e.message)
+        currentSessionId?.let { sessionId ->
+            try {
+                currentApi?.respondToPermission(sessionId, confirmationId, PermissionRequest("allow"))
+            } catch (e: Exception) {
+                _connectionState.value = _connectionState.value.copy(error = e.message)
+            }
         }
     }
 
     override suspend fun denyConfirmation(confirmationId: String) {
-        try {
-            currentApi?.respondToConfirmation(ConfirmationRequest(confirmationId, false))
-        } catch (e: Exception) {
-            _connectionState.value = _connectionState.value.copy(error = e.message)
+        currentSessionId?.let { sessionId ->
+            try {
+                currentApi?.respondToPermission(sessionId, confirmationId, PermissionRequest("deny"))
+            } catch (e: Exception) {
+                _connectionState.value = _connectionState.value.copy(error = e.message)
+            }
         }
     }
 
     override suspend fun interrupt() {
-        try {
-            currentApi?.interruptSession()
-        } catch (e: Exception) {
-            _connectionState.value = _connectionState.value.copy(error = e.message)
+        currentSessionId?.let { sessionId ->
+            try {
+                currentApi?.abortSession(sessionId)
+            } catch (e: Exception) {
+                _connectionState.value = _connectionState.value.copy(error = e.message)
+            }
         }
     }
 
     override suspend fun continueSession() {
-        try {
-            currentApi?.continueSession()
-        } catch (e: Exception) {
-            _connectionState.value = _connectionState.value.copy(error = e.message)
-        }
+        // Not needed with new API
     }
 
     override suspend fun listFiles(path: String): List<FileItem> {
         return try {
             val response = currentApi?.listFiles(path)
-            response?.data?.map { dto ->
+            response?.info?.map { dto ->
                 FileItem(
                     name = dto.name,
                     path = dto.path,
@@ -212,7 +244,7 @@ class OpenCodeRepositoryImpl @Inject constructor(
 
     override suspend fun readFile(path: String): FileContent {
         val response = currentApi?.getFileContent(path)
-        return response?.data?.let { dto ->
+        return response?.info?.let { dto ->
             FileContent(
                 path = dto.path,
                 content = dto.content,

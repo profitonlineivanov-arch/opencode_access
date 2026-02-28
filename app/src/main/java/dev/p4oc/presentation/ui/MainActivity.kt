@@ -106,8 +106,10 @@ fun MainScreen() {
             startDestination = Screen.Chat.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Chat.route) {
+            composable(Screen.Chat.route) { backStackEntry ->
+                val scannedUrl = backStackEntry.savedStateHandle.get<String>("scanned_url")
                 ChatScreen(
+                    scannedUrl = scannedUrl,
                     onNavigateToSettings = {
                         navController.navigate(Screen.Settings.route)
                     },
@@ -130,6 +132,7 @@ fun MainScreen() {
                     onQrCodeScanned = { url ->
                         navController.previousBackStackEntry?.savedStateHandle?.set("scanned_url", url)
                         navController.popBackStack()
+                        navController.previousBackStackEntry?.savedStateHandle?.remove<String>("scanned_url")
                     },
                     onNavigateBack = {
                         navController.popBackStack()

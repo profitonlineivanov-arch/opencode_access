@@ -27,7 +27,8 @@ import dev.p4oc.presentation.viewmodel.ChatViewModel
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
     onNavigateToSettings: () -> Unit,
-    onNavigateToQrScanner: () -> Unit
+    onNavigateToQrScanner: () -> Unit,
+    scannedUrl: String? = null
 ) {
     val uiState by viewModel.uiState.collectAsState(ChatUiState())
     val connectionState by viewModel.connectionState.collectAsState(ConnectionState(false, false))
@@ -45,10 +46,8 @@ fun ChatScreen(
     }
 
     // Handle scanned QR code URL
-    val scannedUrl = remember { mutableStateOf<String?>(null) }
-    
-    LaunchedEffect(scannedUrl.value) {
-        scannedUrl.value?.let { url ->
+    LaunchedEffect(scannedUrl) {
+        scannedUrl?.let { url ->
             val config = ServerConfig(
                 host = "",
                 port = 4096,
@@ -58,7 +57,6 @@ fun ChatScreen(
                 fullUrl = url
             )
             viewModel.connect(config)
-            scannedUrl.value = null
         }
     }
 

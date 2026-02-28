@@ -5,30 +5,43 @@ import retrofit2.http.*
 
 interface OpenCodeApi {
 
-    @POST("api/chat")
-    suspend fun sendChat(@Body request: ChatRequest): ApiResponse<Unit>
+    @GET("global/health")
+    suspend fun healthCheck(): HealthResponse
 
-    @POST("api/toolcall")
-    suspend fun respondToToolCall(@Body request: ToolCallRequest): ApiResponse<Unit>
+    @POST("session")
+    suspend fun createSession(@Body request: CreateSessionRequest): SessionResponse
 
-    @POST("api/confirmation")
-    suspend fun respondToConfirmation(@Body request: ConfirmationRequest): ApiResponse<Unit>
+    @GET("session")
+    suspend fun listSessions(): SessionsListResponse
 
-    @POST("api/session/interrupt")
-    suspend fun interruptSession(): ApiResponse<Unit>
+    @GET("session/{sessionId}")
+    suspend fun getSession(@Path("sessionId") sessionId: String): SessionResponse
 
-    @POST("api/session/continue")
-    suspend fun continueSession(): ApiResponse<Unit>
+    @POST("session/{sessionId}/message")
+    suspend fun sendMessage(
+        @Path("sessionId") sessionId: String,
+        @Body request: ChatRequest
+    ): MessageResponse
 
-    @GET("api/files")
-    suspend fun listFiles(@Query("path") path: String): ApiResponse<List<FileEntryDto>>
+    @POST("session/{sessionId}/prompt_async")
+    suspend fun sendMessageAsync(
+        @Path("sessionId") sessionId: String,
+        @Body request: ChatRequest
+    )
 
-    @GET("api/file/content")
-    suspend fun getFileContent(@Query("path") path: String): ApiResponse<FileContentDto>
+    @POST("session/{sessionId}/abort")
+    suspend fun abortSession(@Path("sessionId") sessionId: String)
 
-    @GET("api/session")
-    suspend fun getCurrentSession(): ApiResponse<SessionDto?>
+    @POST("session/{sessionId}/permissions/{permissionId}")
+    suspend fun respondToPermission(
+        @Path("sessionId") sessionId: String,
+        @Path("permissionId") permissionId: String,
+        @Body request: PermissionRequest
+    )
 
-    @GET("api/confirmations")
-    suspend fun getPendingConfirmations(): ApiResponse<List<UserConfirmationDto>>
+    @GET("file")
+    suspend fun listFiles(@Query("path") path: String): FilesResponse
+
+    @GET("file/content")
+    suspend fun getFileContent(@Query("path") path: String): FileContentResponse
 }

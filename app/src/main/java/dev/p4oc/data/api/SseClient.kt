@@ -27,7 +27,7 @@ class SseClient @Inject constructor() {
             .build()
 
         val request = Request.Builder()
-            .url("$url/api/stream")
+            .url("$url/event")
             .addHeader("Accept", "text/event-stream")
             .addHeader("Cache-Control", "no-cache")
             .apply {
