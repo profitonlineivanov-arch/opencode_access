@@ -3,11 +3,10 @@ package dev.p4oc.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.p4oc.domain.model.ConnectionState
 import dev.p4oc.domain.model.FileContent
 import dev.p4oc.domain.model.FileItem
 import dev.p4oc.domain.repository.OpenCodeRepository
-import dev.p4oc.domain.repository.SettingsRepository
+import dev.p4oc.domain.repository.ProjectInfo
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,7 +14,6 @@ import javax.inject.Inject
 @HiltViewModel
 class FilesViewModel @Inject constructor(
     private val openCodeRepository: OpenCodeRepository,
-    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FilesUiState())
@@ -28,34 +26,55 @@ class FilesViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             openCodeRepository.connectionState.collect { state ->
-                if (state.isConnected && _uiState.value.currentPath == "/") {
-                    loadRoot()
+                if (state.isConnected && _uiState.value.projects.isEmpty()) {
+                    loadProjects()
                 }
             }
         }
     }
 
+    fun loadProjects() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            try {
+                val projects = openCodeRepository.getProjects()
+                _uiState.value = _uiState.value.copy(
+                    projects = projects,
+                    isLoading = false,
+                    showProjects = true
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+            }
+        }
+    }
+
+    fun selectProject(project: ProjectInfo) {
+        _uiState.value = _uiState.value.copy(showProjects = false)
+        navigateToFolder(project.directory)
+    }
+
     fun loadRoot() {
         pathStack.clear()
         if (openCodeRepository.isConnected()) {
-            loadFiles("/")
-        } else {
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                error = "Not connected to server. Please connect first.",
-                files = emptyList(),
-                currentPath = "/"
-            )
+            loadProjects()
         }
     }
 
     fun navigateToFolder(path: String) {
-        pathStack.add(path)
+        pathStack.clear()
         loadFiles(path)
     }
 
     fun navigateBack(): Boolean {
-        if (pathStack.isEmpty()) return false
+        if (_uiState.value.showProjects) return false
+        if (pathStack.isEmpty()) {
+            loadProjects()
+            return true
+        }
         pathStack.removeLastOrNull()
         val parentPath = pathStack.lastOrNull() ?: "/"
         loadFiles(parentPath)
@@ -63,6 +82,11 @@ class FilesViewModel @Inject constructor(
     }
 
     fun navigateUp(): Boolean {
+        if (_uiState.value.showProjects) return false
+        if (pathStack.isEmpty()) {
+            loadProjects()
+            return true
+        }
         return navigateBack()
     }
 
@@ -77,7 +101,7 @@ class FilesViewModel @Inject constructor(
                 return@launch
             }
             
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null, showProjects = false)
             try {
                 val files = openCodeRepository.listFiles(path)
                 _uiState.value = _uiState.value.copy(
@@ -97,6 +121,7 @@ class FilesViewModel @Inject constructor(
 
     fun selectFile(file: FileItem) {
         if (file.isDirectory) {
+            pathStack.add(_uiState.value.currentPath)
             navigateToFolder(file.path)
         } else {
             viewModelScope.launch {
@@ -124,13 +149,19 @@ class FilesViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
+
+    fun showProjects() {
+        loadProjects()
+    }
 }
 
 data class FilesUiState(
     val files: List<FileItem> = emptyList(),
+    val projects: List<ProjectInfo> = emptyList(),
     val currentPath: String = "/",
     val isLoading: Boolean = false,
     val isLoadingFile: Boolean = false,
     val selectedFile: FileContent? = null,
-    val error: String? = null
+    val error: String? = null,
+    val showProjects: Boolean = false
 )

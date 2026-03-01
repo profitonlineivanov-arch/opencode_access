@@ -7,6 +7,7 @@ import dev.p4oc.data.api.SseClient
 import dev.p4oc.data.model.*
 import dev.p4oc.domain.model.*
 import dev.p4oc.domain.repository.OpenCodeRepository
+import dev.p4oc.domain.repository.ProjectInfo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
@@ -252,6 +253,30 @@ class OpenCodeRepositoryImpl @Inject constructor(
                 language = dto.language
             )
         } ?: FileContent(path, "", 0, "")
+    }
+
+    override suspend fun getProjects(): List<ProjectInfo> {
+        return try {
+            val projects = currentApi?.listProjects() ?: emptyList()
+            projects.filter { it.directory.isNotBlank() || it.worktree.isNotBlank() }.map { dto ->
+                ProjectInfo(
+                    id = dto.id,
+                    name = dto.name.ifBlank { dto.worktree.substringAfterLast("\\").substringAfterLast("/") },
+                    directory = dto.directory.ifBlank { dto.worktree }
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override suspend fun getCurrentPath(): String {
+        return try {
+            val pathInfo = currentApi?.getPathInfo()
+            pathInfo?.directory ?: pathInfo?.home ?: "/"
+        } catch (e: Exception) {
+            "/"
+        }
     }
 
     override fun isConnected(): Boolean = sseClient.isConnected()

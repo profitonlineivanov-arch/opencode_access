@@ -23,6 +23,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.p4oc.domain.model.FileContent
 import dev.p4oc.domain.model.FileItem
+import dev.p4oc.domain.repository.ProjectInfo
 import dev.p4oc.presentation.viewmodel.FilesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,12 +36,17 @@ fun FilesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Files") },
+                title = { Text(if (uiState.showProjects) "Projects" else "Files") },
                 navigationIcon = {
-                    if (uiState.currentPath != "/") {
+                    if (!uiState.showProjects && uiState.currentPath != "/") {
                         IconButton(onClick = { viewModel.navigateUp() }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                         }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.showProjects() }) {
+                        Icon(Icons.Default.Folder, contentDescription = "Projects")
                     }
                 }
             )
@@ -51,35 +57,46 @@ fun FilesScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else if (uiState.error != null) {
-                ErrorView(
-                    error = uiState.error!!,
-                    onRetry = { viewModel.loadRoot() },
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else if (uiState.files.isEmpty()) {
-                EmptyFilesView(modifier = Modifier.align(Alignment.Center))
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    item {
-                        CurrentPathHeader(
-                            path = uiState.currentPath,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                    }
-                    
-                    items(uiState.files) { file ->
-                        FileListItem(
-                            file = file,
-                            onClick = { viewModel.selectFile(file) }
-                        )
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                uiState.error != null -> {
+                    ErrorView(
+                        error = uiState.error!!,
+                        onRetry = { viewModel.loadRoot() },
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                uiState.showProjects -> {
+                    ProjectsList(
+                        projects = uiState.projects,
+                        onProjectClick = { viewModel.selectProject(it) }
+                    )
+                }
+                uiState.files.isEmpty() -> {
+                    EmptyFilesView(modifier = Modifier.align(Alignment.Center))
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        item {
+                            CurrentPathHeader(
+                                path = uiState.currentPath,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                        
+                        items(uiState.files) { file ->
+                            FileListItem(
+                                file = file,
+                                onClick = { viewModel.selectFile(file) }
+                            )
+                        }
                     }
                 }
             }
@@ -91,6 +108,71 @@ fun FilesScreen(
             fileContent = fileContent,
             onDismiss = { viewModel.closeFileViewer() }
         )
+    }
+}
+
+@Composable
+private fun ProjectsList(
+    projects: List<ProjectInfo>,
+    onProjectClick: (ProjectInfo) -> Unit
+) {
+    if (projects.isEmpty()) {
+        EmptyFilesView(modifier = Modifier.fillMaxSize())
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(projects) { project ->
+                ProjectListItem(
+                    project = project,
+                    onClick = { onProjectClick(project) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectListItem(
+    project: ProjectInfo,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Folder,
+                contentDescription = null,
+                tint = Color(0xFFFFB74D),
+                modifier = Modifier.size(40.dp)
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column {
+                Text(
+                    text = project.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = project.directory,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
+        }
     }
 }
 
@@ -195,7 +277,6 @@ private fun FileViewerDialog(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Header
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -224,7 +305,6 @@ private fun FileViewerDialog(
                 
                 Divider()
                 
-                // Content
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

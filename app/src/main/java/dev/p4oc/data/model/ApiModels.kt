@@ -10,6 +10,22 @@ data class HealthResponse(
 )
 
 @Serializable
+data class ProjectDto(
+    val id: String,
+    val worktree: String = "",
+    val directory: String = "",
+    val name: String = "",
+    val vcs: String = ""
+)
+
+@Serializable
+data class PathInfoDto(
+    val home: String = "",
+    val directory: String = "",
+    val worktree: String = "/"
+)
+
+@Serializable
 data class CreateSessionRequest(
     val title: String? = null
 )

@@ -8,6 +8,15 @@ interface OpenCodeApi {
     @GET("global/health")
     suspend fun healthCheck(): HealthResponse
 
+    @GET("project")
+    suspend fun listProjects(): List<ProjectDto>
+
+    @GET("project/current")
+    suspend fun getCurrentProject(): ProjectDto
+
+    @GET("path")
+    suspend fun getPathInfo(): PathInfoDto
+
     @POST("session")
     suspend fun createSession(@Body request: CreateSessionRequest): SessionResponse
 

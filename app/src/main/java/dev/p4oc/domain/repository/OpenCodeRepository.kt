@@ -25,5 +25,14 @@ interface OpenCodeRepository {
     suspend fun listFiles(path: String): List<FileItem>
     suspend fun readFile(path: String): FileContent
     
+    suspend fun getProjects(): List<ProjectInfo>
+    suspend fun getCurrentPath(): String
+    
     fun isConnected(): Boolean
 }
+
+data class ProjectInfo(
+    val id: String,
+    val name: String,
+    val directory: String
+)
