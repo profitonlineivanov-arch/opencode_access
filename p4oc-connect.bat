@@ -12,22 +12,25 @@ if not exist "cloudflared.exe" (
 )
 
 taskkill /F /IM cloudflared.exe 2>nul
+del tunnel.log 2>nul
 
 echo Starting OpenCode server...
-start /B opencode serve --port 4096 >nul 2>&1
+start /B opencode serve --port 4096
 timeout /t 3 /nobreak >nul
 
 echo Creating secure tunnel...
-start /B cloudflared.exe tunnel --url localhost:4096 >nul 2>&1
+start /B cmd /c "cloudflared.exe tunnel --url localhost:4096 2^>^&1 > tunnel.log"
 
-echo Getting connection URL...
-timeout /t 10 /nobreak >nul
+echo Waiting for connection...
+timeout /t 12 /nobreak >nul
 
-for /f "delims=" %%a in ('findstr /C:"trycloudflare" tunnel.log 2^>nul') do set URL=%%a
+set URL=
+for /f "tokens=*" %%a in ('findstr /C:"trycloudflare" tunnel.log 2^>nul') do set URL=%%a
 
 if not defined URL (
-    timeout /t 5 /nobreak >nul
-    for /f "delims=" %%a in ('findstr /C:"trycloudflare" tunnel.log 2^>nul') do set URL=%%a
+    echo Retrying...
+    timeout /t 8 /nobreak >nul
+    for /f "tokens=*" %%a in ('findstr /C:"trycloudflare" tunnel.log 2^>nul') do set URL=%%a
 )
 
 if defined URL (
@@ -49,7 +52,11 @@ if defined URL (
     pause >nul
 ) else (
     echo.
-    echo Could not create tunnel. Make sure you have internet connection.
+    echo Could not create tunnel.
+    echo Make sure you have internet connection.
+    echo.
+    echo Debug info:
+    type tunnel.log 2>nul
     echo.
     pause
 )
