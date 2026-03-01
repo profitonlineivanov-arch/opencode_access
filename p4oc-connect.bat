@@ -11,36 +11,26 @@ setlocal enabledelayedexpansion
 if not exist "cloudflared.exe" (
     echo Downloading cloudflared...
     powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile 'cloudflared.exe'"
-    if not exist "cloudflared.exe" (
-        echo Download failed. Trying alternate method...
-        powershell -Command "Start-Process 'https://github.com/cloudflare/cloudflared/releases/latest/cloudflared-windows-amd64.exe/download'"
-        echo.
-        echo Please download cloudflared manually and save in the same folder as this script.
-        echo.
-        pause
-        exit
-    )
 )
 
 taskkill /F /IM cloudflared.exe 2>nul
-del tunnel.log 2>nul
 
 echo Starting OpenCode server...
 start /B opencode serve --port 4096
-timeout /t 4 /nobreak >nul
+timeout /t 3 /nobreak >nul
 
 echo Creating secure tunnel...
-start /B cmd /c "cloudflared.exe tunnel --url localhost:4096 2^>^&1 > tunnel.log"
+start /B cmd /c "cloudflared.exe tunnel --url localhost:4096 > tunnel.log 2>&1"
 
-echo Waiting for connection...
-timeout /t 15 /nobreak >nul
+echo Waiting for URL...
+timeout /t 12 /nobreak >nul
 
 set URL=
-for /f "tokens=*" %%a in ('findstr /C:"trycloudflare" tunnel.log 2^>nul') do set URL=%%a
+for /f "tokens=*" %%a in ('type tunnel.log 2^>nul ^| findstr /C:"trycloudflare.com"') do set URL=%%a
 
 if not defined URL (
-    timeout /t 10 /nobreak >nul
-    for /f "tokens=*" %%a in ('findstr /C:"trycloudflare" tunnel.log 2^>nul') do set URL=%%a
+    timeout /t 8 /nobreak >nul
+    for /f "tokens=*" %%a in ('type tunnel.log 2^>nul ^| findstr /C:"trycloudflare.com"') do set URL=%%a
 )
 
 if defined URL (
@@ -52,17 +42,19 @@ if defined URL (
     echo.
     echo Scan this QR code with P4OC app:
     echo.
-    start "" "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=%URL%"
+    for /f "tokens=2 delims=|" %%a in ("!URL!") do set CLEAN_URL=%%a
+    if not defined CLEAN_URL set CLEAN_URL=!URL!
+    start "" "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=!CLEAN_URL!"
     echo.
-    echo Or copy this URL to your phone:
-    echo %URL%
+    echo URL: !CLEAN_URL!
     echo.
     echo ========================================
     echo Press any key to close
     pause >nul
 ) else (
     echo.
-    echo Could not create tunnel. Try running as Administrator.
+    echo Could not get tunnel URL. Check tunnel.log
+    type tunnel.log 2>nul
     echo.
     pause
 )
