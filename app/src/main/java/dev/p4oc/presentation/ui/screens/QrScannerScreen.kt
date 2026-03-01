@@ -61,10 +61,15 @@ fun QrScannerScreen(
                 .padding(paddingValues)
         ) {
             if (cameraPermissionState.status.isGranted) {
+                var scannedUrl by remember { mutableStateOf<String?>(null) }
+                
                 CameraPreview(
                     onQrCodeScanned = { url ->
-                        viewModel.saveUrl(url)
-                        onQrCodeScanned(url)
+                        if (scannedUrl == null) {
+                            scannedUrl = url
+                            viewModel.saveUrl(url)
+                            onQrCodeScanned(url)
+                        }
                     }
                 )
 
