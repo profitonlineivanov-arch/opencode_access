@@ -17,19 +17,19 @@ taskkill /F /IM cloudflared.exe 2>nul
 
 echo Starting OpenCode server...
 start /B opencode serve --port 4096
-timeout /t 3 /nobreak >nul
+timeout /t 4 /nobreak >nul
 
-echo Creating secure tunnel...
-start /B cmd /c "cloudflared.exe tunnel --url localhost:4096 > tunnel.log 2>&1"
+echo Creating secure tunnel (HTTP)...
+start /B cmd /c "cloudflared.exe tunnel --protocol http2 --url localhost:4096 > tunnel.log 2>&1"
 
 echo Waiting for URL...
-timeout /t 12 /nobreak >nul
+timeout /t 15 /nobreak >nul
 
 set URL=
 for /f "tokens=*" %%a in ('type tunnel.log 2^>nul ^| findstr /C:"trycloudflare.com"') do set URL=%%a
 
 if not defined URL (
-    timeout /t 8 /nobreak >nul
+    timeout /t 10 /nobreak >nul
     for /f "tokens=*" %%a in ('type tunnel.log 2^>nul ^| findstr /C:"trycloudflare.com"') do set URL=%%a
 )
 
@@ -53,7 +53,7 @@ if defined URL (
     pause >nul
 ) else (
     echo.
-    echo Could not get tunnel URL. Check tunnel.log
+    echo Could not get tunnel URL.
     type tunnel.log 2>nul
     echo.
     pause
