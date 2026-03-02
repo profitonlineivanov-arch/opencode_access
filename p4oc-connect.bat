@@ -8,15 +8,28 @@ echo    P4OC Remote - Connect to your Phone
 echo =============================================
 echo.
 
+REM Check if Node.js is installed
+where node >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ERROR: Node.js is not installed!
+    echo Please install Node.js from https://nodejs.org
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Install ws module if needed
+if not exist "node_modules\ws" (
+    echo Installing dependencies...
+    call npm install ws
+)
+
 echo Starting OpenCode server...
 start /B opencode serve --port 4096
 timeout /t 4 /nobreak >nul
 
-echo Creating SSH tunnel to proxy server...
-start /B ssh -N -R 8096:localhost:4096 root@45.146.164.144
-
-echo Waiting for connection...
-timeout /t 5 /nobreak >nul
+echo Connecting to proxy server...
+start /B node p4oc-client.js
 
 cls
 echo.
@@ -32,5 +45,5 @@ echo 4. Port: 8096
 echo 5. Save and Connect
 echo.
 echo =============================================
-echo Press any key to close tunnel
+echo Press any key to exit
 pause >nul
