@@ -8,6 +8,9 @@ echo    P4OC Remote - Connect to your Phone
 echo =============================================
 echo.
 
+REM Set working directory to where the bat is located
+cd /d %~dp0
+
 REM Download client script if not exists
 if not exist "p4oc-client.js" (
     echo Downloading client...
@@ -17,11 +20,19 @@ if not exist "p4oc-client.js" (
 REM Check for Node.js
 where node >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Downloading Node.js...
-    powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.20.0/node-v22.20.0-win-x64.zip' -OutFile '%TEMP%\node.zip'"
-    powershell -Command "Expand-Archive -Path '%TEMP%\node.zip' -DestinationPath '%TEMP%\node' -Force"
-    copy /y "%TEMP%\node\node.exe" . >nul 2>&1
-    copy /y "%TEMP%\node\*.dll" . >nul 2>&1
+    echo Downloading Node.js (one time)...
+    powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.20.0/node-v22.20.0-win-x64.zip' -OutFile 'node.zip'"
+    powershell -Command "Expand-Archive -Path 'node.zip' -DestinationPath 'node' -Force"
+    copy /y node\node.exe . >nul 2>&1
+    copy /y node\*.dll . >nul 2>&1
+    del node.zip >nul 2>&1
+    rmdir /s /q node >nul 2>&1
+)
+
+REM Install ws module
+if not exist "node_modules\ws" (
+    echo Installing WebSocket module...
+    call npm install ws
 )
 
 echo Starting OpenCode server...
