@@ -8,28 +8,32 @@ echo    P4OC Remote - Connect to your Phone
 echo =============================================
 echo.
 
-REM Check if Node.js is installed
+REM Check for Node.js portable or installed
 where node >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: Node.js is not installed!
-    echo Please install Node.js from https://nodejs.org
-    echo.
-    pause
-    exit /b 1
-)
+if %errorlevel% equ 0 goto :start
 
-REM Install ws module if needed
-if not exist "node_modules\ws" (
-    echo Installing dependencies...
-    call npm install ws
-)
+REM Try to download Node.js portable
+echo Node.js not found. Downloading portable version...
+mkdir node_temp 2>nul
+powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.20.0/node-v22.20.0-win-x64.zip' -OutFile 'node_temp\node.zip'"
+powershell -Command "Expand-Archive -Path 'node_temp\node.zip' -DestinationPath 'node_temp' -Force"
+move node_temp\node-v22.20.0-win-x64\node.exe . >nul 2>&1
+move node_temp\node-v22.20.0-win-x64\*.dll . >nul 2>&1
+rmdir /s /q node_temp 2>nul
 
+:start
 echo Starting OpenCode server...
 start /B opencode serve --port 4096
 timeout /t 4 /nobreak >nul
 
 echo Connecting to proxy server...
-start /B node p4oc-client.js
+if exist node.exe (
+    start /B node p4oc-client.js
+) else (
+    echo ERROR: Cannot connect to server without Node.js
+    pause
+    exit /b 1
+)
 
 cls
 echo.
